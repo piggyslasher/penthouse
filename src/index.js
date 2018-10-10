@@ -11,22 +11,9 @@ import {
   closeBrowserPage
 } from './browser'
 
-const debuglog = debug('penthouse')
+import getOptions from '../config'
 
-const DEFAULT_VIEWPORT_WIDTH = 1300 // px
-const DEFAULT_VIEWPORT_HEIGHT = 900 // px
-const DEFAULT_TIMEOUT = 30000 // ms
-const DEFAULT_MAX_EMBEDDED_BASE64_LENGTH = 1000 // chars
-const DEFAULT_USER_AGENT = 'Penthouse Critical Path CSS Generator'
-const DEFAULT_RENDER_WAIT_TIMEOUT = 100
-const DEFAULT_BLOCK_JS_REQUESTS = true
-const DEFAULT_PROPERTIES_TO_REMOVE = [
-  '(.*)transition(.*)',
-  'cursor',
-  'pointer-events',
-  '(-webkit-)?tap-highlight-color',
-  '(.*)user-select'
-]
+const debuglog = debug('penthouse')
 
 function exitHandler (exitCode) {
   closeBrowser({ forceClose: true })
@@ -46,7 +33,7 @@ function readFilePromise (filepath, encoding) {
 
 function prepareForceIncludeForSerialization (forceInclude = []) {
   // need to annotate forceInclude values to allow RegExp to pass through JSON serialization
-  return forceInclude.map(function (forceIncludeValue) {
+  return forceInclude.map((forceIncludeValue) => {
     if (
       typeof forceIncludeValue === 'object' &&
       forceIncludeValue.constructor.name === 'RegExp'
@@ -63,21 +50,25 @@ function prepareForceIncludeForSerialization (forceInclude = []) {
 
 // const so not hoisted, so can get regeneratorRuntime inlined above, needed for Node 4
 const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
-  options,
+  providedOptions,
   { forceTryRestartBrowser } = {}
 ) {
-  const width = parseInt(options.width || DEFAULT_VIEWPORT_WIDTH, 10)
-  const height = parseInt(options.height || DEFAULT_VIEWPORT_HEIGHT, 10)
-  const timeoutWait = options.timeout || DEFAULT_TIMEOUT
   // Merge properties with default ones
-  const propertiesToRemove =
-    options.propertiesToRemove || DEFAULT_PROPERTIES_TO_REMOVE
+  const {
+    width,
+    height,
+    timeoutWait,
+    propertiesToRemove,
+    forceInclude,
+    maxEmbeddedBase64Length,
+    ...options
+  } = getOptions(providedOptions)m
 
   // always forceInclude '*', 'html', and 'body' selectors;
   // yields slight performance improvement
-  const forceInclude = prepareForceIncludeForSerialization(
+  const forceIncludePrepared = prepareForceIncludeForSerialization(
     ['*', '*:before', '*:after', 'html', 'body'].concat(
-      options.forceInclude || []
+      forceInclude || []
     )
   )
 
@@ -98,31 +89,25 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
         cssString: options.cssString,
         width,
         height,
-        forceInclude,
+        forceIncludePrepared,
         strict: options.strict,
-        userAgent: options.userAgent || DEFAULT_USER_AGENT,
-        renderWaitTime: options.renderWaitTime || DEFAULT_RENDER_WAIT_TIMEOUT,
+        userAgent: options.userAgent,
+        renderWaitTime: options.renderWaitTime,
         timeout: timeoutWait,
         pageLoadSkipTimeout: options.pageLoadSkipTimeout,
-        blockJSRequests:
-          typeof options.blockJSRequests !== 'undefined'
-            ? options.blockJSRequests
-            : DEFAULT_BLOCK_JS_REQUESTS,
+        blockJSRequests: options.blockJSRequests,
         customPageHeaders: options.customPageHeaders,
         screenshots: options.screenshots,
         keepLargerMediaQueries: options.keepLargerMediaQueries,
         maxElementsToCheckPerSelector: options.maxElementsToCheckPerSelector,
         // postformatting
         propertiesToRemove,
-        maxEmbeddedBase64Length:
-          typeof options.maxEmbeddedBase64Length === 'number'
-            ? options.maxEmbeddedBase64Length
-            : DEFAULT_MAX_EMBEDDED_BASE64_LENGTH,
+        maxEmbeddedBase64Length,
         debuglog,
         unstableKeepBrowserAlive: options.unstableKeepBrowserAlive
       })
     } catch (e) {
-      const page = await pagePromise.then(({ page }) => page)
+      const page = await pagePromise.then(({ returnedPage }) => returnedPage)
       await closeBrowserPage({
         page,
         error: e,
@@ -132,11 +117,11 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
       const runningBrowswer = await browserIsRunning()
       if (!forceTryRestartBrowser && !runningBrowswer) {
         debuglog(
-          'Browser unexpecedly not opened - crashed? ' +
-            '\nurl: ' +
-            options.url +
-            '\ncss length: ' +
-            options.cssString.length
+          `${'Browser unexpecedly not opened - crashed? ' +
+            '\nurl: '}${
+            options.url
+          }\ncss length: ${
+            options.cssString.length}`
         )
         await restartBrowser({
           width,
@@ -155,7 +140,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
       return
     }
 
-    const page = await pagePromise.then(({ page }) => page)
+    const page = await pagePromise.then(({ returnedPage }) => returnedPage)
     await closeBrowserPage({
       page,
       unstableKeepBrowserAlive: options.unstableKeepBrowserAlive
@@ -164,7 +149,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
     debuglog('generateCriticalCss done')
     if (formattedCss.trim().length === 0) {
       // TODO: would be good to surface this to user, always
-      debuglog('Note: Generated critical css was empty for URL: ' + options.url)
+      debuglog(`Note: Generated critical css was empty for URL: ${options.url}`)
       resolve('')
       return
     }
@@ -173,7 +158,9 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
   })
 }
 
-module.exports = function (options, callback) {
+module.exports = function (providedOptions, callback) {
+  const options = getOptions(providedOptions)
+
   process.on('exit', exitHandler)
   process.on('SIGTERM', exitHandler)
   process.on('SIGINT', exitHandler)
@@ -206,7 +193,7 @@ module.exports = function (options, callback) {
         const cssString = await readFilePromise(options.css, 'utf8')
         options = Object.assign({}, options, { cssString })
       } catch (err) {
-        debuglog('error reading css file: ' + options.css + ', error: ' + err)
+        debuglog(`error reading css file: ${options.css}, error: ${err}`)
         cleanupAndExit({ error: err })
         return
       }
@@ -217,8 +204,7 @@ module.exports = function (options, callback) {
       return
     }
 
-    const width = parseInt(options.width || DEFAULT_VIEWPORT_WIDTH, 10)
-    const height = parseInt(options.height || DEFAULT_VIEWPORT_HEIGHT, 10)
+    const { width, height } = options
     // launch the browser
     await launchBrowserIfNeeded({
       getBrowser: options.puppeteer && options.puppeteer.getBrowser,
