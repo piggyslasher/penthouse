@@ -124,4 +124,4 @@ const handler = {
   }
 }
 
-module.exports = opts /*:: : PenthouseOption */ => new Proxy(opts, handler)
+module.exports = (opts /*:: : PenthouseOptions */) => new Proxy(opts, handler)
