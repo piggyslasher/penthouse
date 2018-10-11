@@ -3,12 +3,12 @@ import debug from 'debug'
 
 import generateCriticalCss from './core'
 import {
-  launchBrowserIfNeeded,
-  closeBrowser,
-  restartBrowser,
   browserIsRunning,
+  closeBrowser,
+  closeBrowserPage,
   getOpenBrowserPage,
-  closeBrowserPage
+  launchBrowserIfNeeded,
+  restartBrowser
 } from './browser'
 
 import getOptions from '../config'
@@ -57,12 +57,12 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
   const {
     width,
     height,
-    timeoutWait,
+    timeout,
     propertiesToRemove,
     forceInclude,
     maxEmbeddedBase64Length,
     ...options
-  } = getOptions(providedOptions)m
+  } = getOptions(providedOptions)
 
   // always forceInclude '*', 'html', and 'body' selectors;
   // yields slight performance improvement
@@ -93,7 +93,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
         strict: options.strict,
         userAgent: options.userAgent,
         renderWaitTime: options.renderWaitTime,
-        timeout: timeoutWait,
+        timeout,
         pageLoadSkipTimeout: options.pageLoadSkipTimeout,
         blockJSRequests: options.blockJSRequests,
         customPageHeaders: options.customPageHeaders,
@@ -157,9 +157,11 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
     resolve(formattedCss)
   })
 }
+// @flow
+export const penthouseOptions = getOptions({})
 
-module.exports = function (providedOptions, callback) {
-  const options = getOptions(providedOptions)
+export default function (providedOptions, callback) {
+  let options = getOptions(providedOptions)
 
   process.on('exit', exitHandler)
   process.on('SIGTERM', exitHandler)
