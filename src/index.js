@@ -157,67 +157,68 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
     resolve(formattedCss)
   })
 }
-// @flow
-export const getOptions
 
-export default function (providedOptions, callback) {
-  let options = getOptions(providedOptions)
+module.exports = {
+  default: function (providedOptions, callback) {
+    let options = getOptions(providedOptions)
 
-  process.on('exit', exitHandler)
-  process.on('SIGTERM', exitHandler)
-  process.on('SIGINT', exitHandler)
+    process.on('exit', exitHandler)
+    process.on('SIGTERM', exitHandler)
+    process.on('SIGINT', exitHandler)
 
-  return new Promise(async (resolve, reject) => {
-    function cleanupAndExit ({ returnValue, error = null }) {
-      process.removeListener('exit', exitHandler)
-      process.removeListener('SIGTERM', exitHandler)
-      process.removeListener('SIGINT', exitHandler)
+    return new Promise(async (resolve, reject) => {
+      function cleanupAndExit ({ returnValue, error = null }) {
+        process.removeListener('exit', exitHandler)
+        process.removeListener('SIGTERM', exitHandler)
+        process.removeListener('SIGINT', exitHandler)
 
-      closeBrowser({
-        unstableKeepBrowserAlive: options.unstableKeepBrowserAlive
+        closeBrowser({
+          unstableKeepBrowserAlive: options.unstableKeepBrowserAlive
+        })
+
+        // still supporting legacy callback way of calling Penthouse
+        if (callback) {
+          callback(error, returnValue)
+          return
+        }
+        if (error) {
+          reject(error)
+        } else {
+          resolve(returnValue)
+        }
+      }
+
+      // support legacy mode of passing in css file path instead of string
+      if (!options.cssString && options.css) {
+        try {
+          const cssString = await readFilePromise(options.css, 'utf8')
+          options = Object.assign({}, options, { cssString })
+        } catch (err) {
+          debuglog(`error reading css file: ${options.css}, error: ${err}`)
+          cleanupAndExit({ error: err })
+          return
+        }
+      }
+      if (!options.cssString) {
+        debuglog('Passed in css is empty')
+        cleanupAndExit({ error: new Error('css should not be empty') })
+        return
+      }
+
+      const { width, height } = options
+      // launch the browser
+      await launchBrowserIfNeeded({
+        getBrowser: options.puppeteer && options.puppeteer.getBrowser,
+        width,
+        height
       })
-
-      // still supporting legacy callback way of calling Penthouse
-      if (callback) {
-        callback(error, returnValue)
-        return
-      }
-      if (error) {
-        reject(error)
-      } else {
-        resolve(returnValue)
-      }
-    }
-
-    // support legacy mode of passing in css file path instead of string
-    if (!options.cssString && options.css) {
       try {
-        const cssString = await readFilePromise(options.css, 'utf8')
-        options = Object.assign({}, options, { cssString })
+        const criticalCss = await generateCriticalCssWrapped(options)
+        cleanupAndExit({ returnValue: criticalCss })
       } catch (err) {
-        debuglog(`error reading css file: ${options.css}, error: ${err}`)
         cleanupAndExit({ error: err })
-        return
       }
-    }
-    if (!options.cssString) {
-      debuglog('Passed in css is empty')
-      cleanupAndExit({ error: new Error('css should not be empty') })
-      return
-    }
-
-    const { width, height } = options
-    // launch the browser
-    await launchBrowserIfNeeded({
-      getBrowser: options.puppeteer && options.puppeteer.getBrowser,
-      width,
-      height
     })
-    try {
-      const criticalCss = await generateCriticalCssWrapped(options)
-      cleanupAndExit({ returnValue: criticalCss })
-    } catch (err) {
-      cleanupAndExit({ error: err })
-    }
-  })
+  },
+  getOptions
 }

@@ -21,7 +21,7 @@
     "node": ">=6.14.0"
   },
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src config",
     "test": "jest test/core.test.js",
     "test-all": "jest test/*.test.js && yarn test-extra && yarn test-perf",
     "test-perf": "jest  --runInBand test/run-sequential/perf.test.js",
@@ -82,9 +82,9 @@
           "targets": {
             "node": "6.14"
           }
-        },
-        "flow"
-      ]
+        }
+      ],
+      "flow"
     ],
     "plugins": [
       "transform-object-rest-spread"

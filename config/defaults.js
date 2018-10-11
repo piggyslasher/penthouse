@@ -11,16 +11,36 @@ type Option = {
   value?: mixed,
   cast?: function
 }
-*/
 
-/*::
-export type PenthouseOptions = {
-  url: Option,
-  cssString: Option,
-  css: Option,
-  width: Option,
-  height: Option,
-};
+export type ValidOption =
+  'url' |
+  'cssString' |
+  'css' |
+  'width' |
+  'height' |
+  'cssString' |
+  'css' |
+  'width' |
+  'height' |
+  'screenshot' |
+  'keepLargerMeduaQueries' |
+  'forceInclude' |
+  'propertiesToRemove' |
+  'timeout' |
+  'puppeteer' |
+  'pageLoadSkipTimeout' |
+  'renderWaitTime' |
+  'blockJsRequests' |
+  'maxEmbeddedBase64Length' |
+  'maxElementsToCheckSelector' |
+  'userAgent' |
+  'customPageHeaders' |
+  'strict'|
+  'unstableKeepBrowserAlive';
+
+export type PenthouseOptions = { [ValidOption]: Option };
+
+export type ProvidedOptions = { [ValidOption]: any };
 */
 
 // Regarding abbreviates and camelCase https://www.approxion.com/?p=303
@@ -29,7 +49,11 @@ const penthouseOptions /*: PenthouseOptions */ = {
     command: '-u, --url',
     desc: 'Accessible url. Use file:/// protocol for local html files'
   },
-  unstableKeepBrowserAlive: false,
+  unstableKeepBrowserAlive: {
+    command: '-A --keep-browser-alive',
+    desc: '',
+    value: false
+  },
   cssString: {
     command: '-C, --css-string',
     desc: 'Original css to extract critical css from'
