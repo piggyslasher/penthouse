@@ -11,7 +11,7 @@ import {
   restartBrowser
 } from './browser'
 
-import getOptions from '../config'
+import { getOptions } from '../config'
 
 const debuglog = debug('penthouse')
 
@@ -150,7 +150,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
     if (formattedCss.trim().length === 0) {
       // TODO: would be good to surface this to user, always
       debuglog(`Note: Generated critical css was empty for URL: ${options.url}`)
-      resolve('')
+      resolve(' ')
       return
     }
 
@@ -158,7 +158,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
   })
 }
 // @flow
-export const penthouseOptions = getOptions({})
+export const getOptions
 
 export default function (providedOptions, callback) {
   let options = getOptions(providedOptions)

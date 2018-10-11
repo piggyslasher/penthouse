@@ -17,7 +17,6 @@ describe('Configuration', () => {
     )
 
     console.log(defaultConfig, config)
-    debugger
 
     expect(config.url).toEqual(providedOptions.url)
     expect(config.width).toEqual(providedOptions.width)

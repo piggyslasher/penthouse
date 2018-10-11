@@ -6,18 +6,16 @@ import type { PenthouseOptions } from './defaults'
 
 import defaults from './defaults'
 
-console.log('conf')
-
 const handler/*: any */ = {
   get: (
     options/*: any */,
     name/*: any */
   ) => {
     const cast/*: any */=
-      options[name] && options[name].cast || ((_) => _)
-    return cast(
-      (options[name] && options[name].value)
-    )
+      options[name] && options[name].cast || null
+    return cast
+      ? cast(options[name].value)
+      : options[name].value
   }
   // getOwnPropertyDescriptor: (
   //   options/*: any */,
