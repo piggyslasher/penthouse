@@ -12,31 +12,7 @@ type Option = {
   cast?: function
 }
 
-export type ValidOption =
-  'url' |
-  'cssString' |
-  'css' |
-  'width' |
-  'height' |
-  'cssString' |
-  'css' |
-  'width' |
-  'height' |
-  'screenshot' |
-  'keepLargerMeduaQueries' |
-  'forceInclude' |
-  'propertiesToRemove' |
-  'timeout' |
-  'puppeteer' |
-  'pageLoadSkipTimeout' |
-  'renderWaitTime' |
-  'blockJsRequests' |
-  'maxEmbeddedBase64Length' |
-  'maxElementsToCheckSelector' |
-  'userAgent' |
-  'customPageHeaders' |
-  'strict'|
-  'unstableKeepBrowserAlive';
+export type ValidOption = $Keys<typeof penthouseOptions>
 
 export type PenthouseOptions = { [ValidOption]: Option };
 
@@ -44,7 +20,7 @@ export type ProvidedOptions = { [ValidOption]: any };
 */
 
 // Regarding abbreviates and camelCase https://www.approxion.com/?p=303
-const penthouseOptions /*: PenthouseOptions */ = {
+const penthouseOptions = {
   url: {
     command: '-u, --url',
     desc: 'Accessible url. Use file:/// protocol for local html files'
