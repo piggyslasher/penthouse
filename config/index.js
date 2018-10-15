@@ -8,16 +8,18 @@ import defaults from './defaults'
 
 const handler/*: any */ = {
   get: (
-    options/*: PenthouseOptions */,
-    name/*: any */
+    options/*: ProvidedOptions */,
+    name/*: ValidOption */
   ) => {
     // cast is simple a function that is used to ensure the return type
     // i.e. parseInt can be used in the case of an option that needs to be numeric
     const cast/*: any */=
-      options[name] && options[name].cast || null
+      defaults[name] && defaults[name].cast || null
+    const value = options[name] || (defaults[name] && defaults[name].value)
+
     return cast
-      ? cast(options[name].value)
-      : options[name].value
+      ? cast(value)
+      : value
   }
 }
 
@@ -25,11 +27,9 @@ const handler/*: any */ = {
 declare type ProxiedOptions = { ...Proxy<PenthouseOptions>, ...ProvidedOptions }
 */
 
-const normalizedOptions /*: ProxiedOptions */ = new Proxy(defaults, handler)
-
 const getOptions =
-  (opts/*:: : ?ProxiedOptions */ = normalizedOptions)/*: ProxiedOptions */ =>
-    ({ ...normalizedOptions, ...opts })
+  (opts/*:: : ?ProxiedOptions */ = {})/*: ProxiedOptions */ =>
+    new Proxy(opts, handler)
 
 module.exports = {
   getOptions,

@@ -16,10 +16,22 @@ describe('Configuration', () => {
       providedOptions
     )
 
-    console.log(defaultConfig, config)
+    console.log(config)
 
     expect(config.url).toEqual(providedOptions.url)
     expect(config.width).toEqual(providedOptions.width)
     expect(config.height).toEqual(defaultConfig.height.value)
+  })
+
+  it('should cast px value to int', () => {
+    const providedOptions = {
+      width: '400px',
+      height: '1'
+    }
+
+    const config = getOptions(providedOptions)
+
+    expect(config.width).toEqual(400)
+    expect(config.height).toEqual(1)
   })
 })

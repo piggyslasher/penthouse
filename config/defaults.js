@@ -8,7 +8,7 @@ const parseIntRadixed = (
 type Option = {
   command: string,
   desc: string,
-  value?: mixed,
+  value?: any,
   cast?: function
 }
 
@@ -22,7 +22,7 @@ export type ProvidedOptions = { [ValidOption]: any };
 // Regarding abbreviates and camelCase https://www.approxion.com/?p=303
 const penthouseOptions = {
   url: {
-    command: '-u, --url',
+    command: '-u, --url [value]',
     desc: 'Accessible url. Use file:/// protocol for local html files'
   },
   unstableKeepBrowserAlive: {
@@ -31,21 +31,21 @@ const penthouseOptions = {
     value: false
   },
   cssString: {
-    command: '-C, --css-string',
+    command: '-C, --css-string [value]',
     desc: 'Original css to extract critical css from'
   },
   css: {
-    command: '-c, --css',
+    command: '-c, --css [value]',
     desc: 'Path to original css file on disk (if using instead of cssString)'
   },
   width: {
-    command: '-w, --width <n>',
+    command: '-w, --width [n]',
     desc: 'Width for critical viewport (default 1300)',
     value: 1300,
     cast: parseIntRadixed
   },
   height: {
-    command: '-h, --height <n>',
+    command: '-h, --height [n]',
     desc: 'Height for critical viewport (default 900)',
     value: 900,
     cast: parseIntRadixed
